@@ -2,20 +2,31 @@ package com.example.app_jogo_da_velha.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.app_jogo_da_velha.domain.GameLogic
+import com.example.app_jogo_da_velha.domain.ai.AiFactory
 import com.example.app_jogo_da_velha.model.Difficulty
 import com.example.app_jogo_da_velha.model.GameMode
 import com.example.app_jogo_da_velha.model.GameUiState
 import com.example.app_jogo_da_velha.model.Player
 import com.example.app_jogo_da_velha.model.Score
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class GameViewModel(
-    private val savedStateHandle: SavedStateHandle
+// @JvmOverloads gera o construtor (SavedStateHandle) usado pela fábrica padrão do viewModel()
+class GameViewModel @JvmOverloads constructor(
+    private val savedStateHandle: SavedStateHandle,
+    private val aiDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val aiDelayMillis: Long = 500L
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -30,47 +41,27 @@ class GameViewModel(
     )
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
-    // Jogada da IA em andamento (usado na próxima etapa)
+    // Jogada da IA em andamento
     private var aiJob: Job? = null
+
+    // Muda a cada resetGame(); uma jogada da IA só é aplicada na partida em que foi pedida
+    private var gameId = 0
 
     fun onCellClick(index: Int) {
         val state = _uiState.value
         if (!state.boardEnabled || state.board[index] != null) return
 
-        val newBoard = GameLogic.applyMove(state.board, index, state.currentPlayer)
-        val win = GameLogic.checkWinner(newBoard)
+        applyMove(index, state.currentPlayer)
 
-        when {
-            win != null -> {
-                val (winner, line) = win
-                val score = state.currentScore.let {
-                    if (winner == Player.X) it.copy(xWins = it.xWins + 1)
-                    else it.copy(oWins = it.oWins + 1)
-                }
-                _uiState.update { it.copy(board = newBoard, winner = winner, winningLine = line) }
-                updateScore(state.mode, score)
-            }
-
-            GameLogic.isDraw(newBoard) -> {
-                val score = state.currentScore.let { it.copy(draws = it.draws + 1) }
-                _uiState.update { it.copy(board = newBoard, isDraw = true) }
-                updateScore(state.mode, score)
-            }
-
-            else -> {
-                val nextPlayer = state.currentPlayer.opponent
-                _uiState.update { it.copy(board = newBoard, currentPlayer = nextPlayer) }
-
-                if (state.mode == GameMode.PVE && nextPlayer == AI_PLAYER) {
-                    // TODO: disparar a jogada da IA aqui (aiJob = viewModelScope.launch { ... }).
-                    //  Por enquanto o O é jogado manualmente no modo PVE.
-                }
-            }
+        val next = _uiState.value
+        if (next.mode == GameMode.PVE && !next.isGameOver && next.currentPlayer == AI_PLAYER) {
+            startAiTurn()
         }
     }
 
     fun resetGame() {
         cancelAi()
+        gameId++
         _uiState.update {
             it.copy(
                 board = List(9) { null },
@@ -98,14 +89,67 @@ class GameViewModel(
 
     /** Troca a dificuldade e reinicia o tabuleiro; o placar é mantido. */
     fun setDifficulty(difficulty: Difficulty) {
+        cancelAi()
         _uiState.update { it.copy(difficulty = difficulty) }
         savedStateHandle[KEY_DIFFICULTY] = difficulty.name
         resetGame()
     }
 
+    private fun startAiTurn() {
+        val startedGameId = gameId
+        val state = _uiState.value
+        val ai = AiFactory.create(state.difficulty)
+
+        // Trava o tabuleiro já na mesma atualização de estado
+        _uiState.update { it.copy(isAiThinking = true) }
+
+        aiJob = viewModelScope.launch {
+            delay(aiDelayMillis)
+            // O Minimax pode ser pesado: calcula fora da thread principal
+            val move = withContext(aiDispatcher) { ai.chooseMove(state.board, AI_PLAYER) }
+
+            // Se a partida foi reiniciada no meio do caminho, descarta a jogada
+            ensureActive()
+            if (startedGameId != gameId) return@launch
+
+            applyMove(move, AI_PLAYER)
+            _uiState.update { it.copy(isAiThinking = false) }
+        }
+    }
+
+    /** Coloca a peça de [player], verifica vitória/empate e atualiza o placar do modo atual. */
+    private fun applyMove(index: Int, player: Player) {
+        val state = _uiState.value
+        val newBoard = GameLogic.applyMove(state.board, index, player)
+        val win = GameLogic.checkWinner(newBoard)
+
+        when {
+            win != null -> {
+                val (winner, line) = win
+                val score = state.currentScore.let {
+                    if (winner == Player.X) it.copy(xWins = it.xWins + 1)
+                    else it.copy(oWins = it.oWins + 1)
+                }
+                _uiState.update { it.copy(board = newBoard, winner = winner, winningLine = line) }
+                updateScore(state.mode, score)
+            }
+
+            GameLogic.isDraw(newBoard) -> {
+                val score = state.currentScore.let { it.copy(draws = it.draws + 1) }
+                _uiState.update { it.copy(board = newBoard, isDraw = true) }
+                updateScore(state.mode, score)
+            }
+
+            else -> _uiState.update {
+                it.copy(board = newBoard, currentPlayer = player.opponent)
+            }
+        }
+    }
+
     private fun cancelAi() {
         aiJob?.cancel()
         aiJob = null
+        _uiState.update { it.copy(isAiThinking = false) }
     }
 
     private fun updateScore(mode: GameMode, score: Score) {

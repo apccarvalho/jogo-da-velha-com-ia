@@ -35,8 +35,7 @@ fun StatusPanel(
         winner != null -> stringResource(R.string.status_winner, winner.name)
         isDraw -> stringResource(R.string.status_draw)
         isPve && isAiThinking -> stringResource(R.string.status_ai_thinking)
-        isPve && currentPlayer == Player.X -> stringResource(R.string.status_your_turn)
-        isPve -> stringResource(R.string.status_ai_turn) // provisório até a IA existir
+        isPve -> stringResource(R.string.status_your_turn)
         else -> stringResource(R.string.status_turn, currentPlayer.name)
     }
 

@@ -22,7 +22,6 @@
     <string name="status_winner">%1$s venceu!</string>
     <string name="status_draw">Empate!</string>
     <string name="status_your_turn">Sua vez</string>
-    <string name="status_ai_turn">Vez da IA (O)</string>
     <string name="status_ai_thinking">IA pensando…</string>
     <string name="status_you_won">Você venceu!</string>
     <string name="status_ai_won">A IA venceu!</string>
