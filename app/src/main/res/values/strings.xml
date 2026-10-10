@@ -1,3 +1,33 @@
 <resources>
     <string name="app_name">app-jogo-da-velha</string>
+
+    <string name="game_title">Jogo da Velha</string>
+
+    <!-- Seletores -->
+    <string name="mode_pve">Contra IA</string>
+    <string name="mode_pvp">2 Jogadores</string>
+    <string name="difficulty_easy">Fácil</string>
+    <string name="difficulty_medium">Médio</string>
+    <string name="difficulty_hard">Difícil</string>
+
+    <!-- Placar -->
+    <string name="score_you">Você (X)</string>
+    <string name="score_ai">IA (O)</string>
+    <string name="score_player_x">Jogador X</string>
+    <string name="score_player_o">Jogador O</string>
+    <string name="score_draws">Empates</string>
+
+    <!-- Status -->
+    <string name="status_turn">Vez do %1$s</string>
+    <string name="status_winner">%1$s venceu!</string>
+    <string name="status_draw">Empate!</string>
+    <string name="status_your_turn">Sua vez</string>
+    <string name="status_ai_turn">Vez da IA (O)</string>
+    <string name="status_ai_thinking">IA pensando…</string>
+    <string name="status_you_won">Você venceu!</string>
+    <string name="status_ai_won">A IA venceu!</string>
+
+    <!-- Ações -->
+    <string name="action_reset_game">Reiniciar partida</string>
+    <string name="action_reset_score">Zerar placar</string>
 </resources>

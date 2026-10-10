@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.app_jogo_da_velha.feature.game.TicTacToeScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.app_jogo_da_velha.ui.GameScreen
 import com.example.app_jogo_da_velha.ui.theme.AppjogodavelhaTheme
+import com.example.app_jogo_da_velha.viewmodel.GameViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,8 +22,7 @@ class MainActivity : ComponentActivity() {
             AppjogodavelhaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Surface(modifier = Modifier.padding(innerPadding)) {
-
-                        TicTacToeScreen()
+                        GameScreen(viewModel = viewModel<GameViewModel>())
                     }
                 }
             }
