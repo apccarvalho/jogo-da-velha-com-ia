@@ -3,37 +3,7 @@ package com.example.app_jogo_da_velha.domain.ai
 import com.example.app_jogo_da_velha.domain.GameLogic
 import com.example.app_jogo_da_velha.model.Player
 
-/**
- * Difícil: Minimax com poda alfa-beta. Joga de forma perfeita, então nunca perde.
- *
- * ## Minimax
- * O jogo da velha é pequeno o bastante para explorar a árvore inteira de jogadas
- * possíveis a partir do tabuleiro atual. Cada nó da árvore é um tabuleiro; os filhos são
- * os tabuleiros resultantes de cada jogada disponível. Nas folhas (vitória ou empate)
- * atribuímos uma pontuação:
- *
- * - vitória da IA      → `10 - depth`
- * - vitória do humano  → `depth - 10`
- * - empate             → `0`
- *
- * O `depth` (quantas jogadas foram simuladas até ali) faz a IA preferir vencer o mais
- * rápido possível (pontuação maior) e, se for perder, perder o mais tarde possível
- * (pontuação menos negativa), dando ao humano mais chances de errar.
- *
- * Subindo na árvore, os dois jogadores se alternam:
- * - na vez da IA (nó **maximizador**) escolhemos o filho de **maior** pontuação;
- * - na vez do humano (nó **minimizador**) supomos que ele joga o melhor possível para
- *   ele, ou seja, escolhemos o filho de **menor** pontuação.
- *
- * ## Poda alfa-beta
- * Durante a busca guardamos duas cotas:
- * - `alpha`: a melhor pontuação que a IA (maximizador) já tem garantida neste caminho;
- * - `beta`: a melhor pontuação que o humano (minimizador) já tem garantida.
- *
- * Se em algum nó `beta <= alpha`, o adversário nunca deixaria o jogo chegar até ali
- * (ele já tem uma alternativa melhor em outro ramo), então os filhos restantes podem ser
- * ignorados sem mudar o resultado. Isso reduz bastante o número de tabuleiros avaliados.
- */
+
 class HardAi : AiPlayer {
 
     override fun chooseMove(board: List<Player?>, aiPlayer: Player): Int {

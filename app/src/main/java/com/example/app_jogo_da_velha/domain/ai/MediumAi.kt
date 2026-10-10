@@ -4,11 +4,6 @@ import com.example.app_jogo_da_velha.domain.GameLogic
 import com.example.app_jogo_da_velha.model.Player
 import kotlin.random.Random
 
-/**
- * Médio: heurística simples, em ordem de prioridade:
- * 1) vence se puder; 2) bloqueia a vitória do humano; 3) centro; 4) canto aleatório;
- * 5) qualquer célula livre.
- */
 class MediumAi(
     private val random: Random = Random.Default
 ) : AiPlayer {
